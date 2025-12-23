@@ -1,0 +1,265 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Управление скраперами{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Главная</a>
+    › Скраперы
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .scraper-container {
+        max-width: 1000px;
+    }
+    .store-card {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .store-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+    .store-name {
+        font-size: 1.5em;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .store-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2em;
+    }
+    .store-icon.pyaterochka { background: #e30613; }
+    .store-icon.magnit { background: #e31e24; }
+    .store-stats {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+    .btn-scrape {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-demo {
+        background: #417690;
+        color: white;
+    }
+    .btn-demo:hover {
+        background: #2e5265;
+    }
+    .btn-full {
+        background: #22c55e;
+        color: white;
+    }
+    .btn-full:hover {
+        background: #16a34a;
+    }
+    .btn-scrape:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    .status-message {
+        margin-top: 15px;
+        padding: 10px 15px;
+        border-radius: 6px;
+        display: none;
+    }
+    .status-message.info {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #90caf9;
+    }
+    .status-message.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #a5d6a7;
+    }
+    .status-message.error {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ef9a9a;
+    }
+    .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .help-text {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+    .help-text h3 {
+        margin-top: 0;
+    }
+    .help-text ul {
+        margin-bottom: 0;
+    }
+</style>
+
+<div class="scraper-container">
+    <h1>🤖 Управление скраперами</h1>
+    
+    <div class="help-text">
+        <h3>ℹ️ Справка</h3>
+        <ul>
+            <li><strong>Демо режим</strong> — парсит только первую категорию (быстрая проверка)</li>
+            <li><strong>Полный парсинг</strong> — парсит все категории (занимает 30-60 минут)</li>
+            <li>Скрапер открывает браузер Chrome и автоматически собирает данные</li>
+        </ul>
+    </div>
+    
+    {% for store in stores %}
+    <div class="store-card" id="store-{{ store.id }}">
+        <div class="store-header">
+            <div class="store-name">
+                <span class="store-icon {% if store.id == '5ka' %}pyaterochka{% else %}magnit{% endif %}">
+                    {% if store.id == '5ka' %}5{% else %}М{% endif %}
+                </span>
+                {{ store.name }}
+            </div>
+            <div class="store-stats">
+                📦 {{ store.products|default:0 }} товаров в базе
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-scrape btn-demo" onclick="runScraper('{{ store.id }}', 'demo')">
+                🚀 Демо режим
+            </button>
+            <button class="btn-scrape btn-full" onclick="runScraper('{{ store.id }}', 'full')">
+                📦 Полный парсинг
+            </button>
+        </div>
+        
+        <div class="status-message" id="status-{{ store.id }}"></div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+let isRunning = false;
+
+function runScraper(store, mode) {
+    if (isRunning) {
+        alert('Скрапер уже запущен!');
+        return;
+    }
+    
+    const modeName = mode === 'full' ? 'полный парсинг' : 'демо режим';
+    if (mode === 'full' && !confirm(`Запустить ${modeName}? Это займет 30-60 минут.`)) {
+        return;
+    }
+    
+    isRunning = true;
+    
+    // Disable all buttons
+    document.querySelectorAll('.btn-scrape').forEach(btn => btn.disabled = true);
+    
+    // Show status
+    const statusEl = document.getElementById('status-' + store);
+    statusEl.className = 'status-message info';
+    statusEl.innerHTML = '<span class="spinner"></span> Скрапер запущен, подождите...';
+    statusEl.style.display = 'block';
+    
+    // Send request
+    fetch('{% url "admin:run_scraper" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `store=${store}&mode=${mode}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusEl.className = 'status-message success';
+            statusEl.innerHTML = '✅ ' + data.message;
+            // Start polling for status
+            pollStatus(store);
+        } else {
+            statusEl.className = 'status-message error';
+            statusEl.innerHTML = '❌ ' + data.message;
+            enableButtons();
+        }
+    })
+    .catch(error => {
+        statusEl.className = 'status-message error';
+        statusEl.innerHTML = '❌ Ошибка: ' + error;
+        enableButtons();
+    });
+}
+
+function pollStatus(store) {
+    const statusEl = document.getElementById('status-' + store);
+    
+    const check = () => {
+        fetch('{% url "admin:scraper_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.running) {
+                statusEl.innerHTML = '<span class="spinner"></span> Скрапер работает для ' + (data.store === '5ka' ? 'Пятёрочка' : 'Магнит') + '...';
+                setTimeout(check, 3000);
+            } else {
+                if (data.result) {
+                    if (data.result.success) {
+                        statusEl.className = 'status-message success';
+                        statusEl.innerHTML = '✅ Скрапер завершил работу!';
+                    } else {
+                        statusEl.className = 'status-message error';
+                        statusEl.innerHTML = '❌ Ошибка: ' + (data.result.error || 'Неизвестная ошибка');
+                    }
+                }
+                enableButtons();
+                // Reload page to update product counts
+                setTimeout(() => location.reload(), 2000);
+            }
+        });
+    };
+    
+    setTimeout(check, 3000);
+}
+
+function enableButtons() {
+    isRunning = false;
+    document.querySelectorAll('.btn-scrape').forEach(btn => btn.disabled = false);
+}
+</script>
+{% endblock %}
+

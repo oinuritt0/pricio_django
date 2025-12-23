@@ -5,9 +5,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from products.admin import pricio_admin
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', pricio_admin.urls),  # Custom admin with scraper management
     path('', include('products.urls')),
     path('accounts/', include('accounts.urls')),
 ]

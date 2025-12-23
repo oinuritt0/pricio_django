@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | Pricio Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">🛒 Pricio Администрирование</a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}
+<style>
+    .admin-nav {
+        background: #417690;
+        padding: 0 20px;
+    }
+    .admin-nav ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        gap: 5px;
+    }
+    .admin-nav li a {
+        display: block;
+        padding: 10px 15px;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px 4px 0 0;
+        transition: background 0.2s;
+    }
+    .admin-nav li a:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    .admin-nav li a.active {
+        background: #205067;
+    }
+    .admin-nav li a .icon {
+        margin-right: 5px;
+    }
+</style>
+<nav class="admin-nav">
+    <ul>
+        <li><a href="{% url 'admin:index' %}"><span class="icon">📊</span> Главная</a></li>
+        <li><a href="{% url 'admin:scrapers' %}"><span class="icon">🤖</span> Скраперы</a></li>
+        <li><a href="{% url 'admin:products_product_changelist' %}"><span class="icon">📦</span> Товары</a></li>
+        <li><a href="{% url 'admin:auth_user_changelist' %}"><span class="icon">👥</span> Пользователи</a></li>
+        <li><a href="/" target="_blank"><span class="icon">🌐</span> Сайт</a></li>
+    </ul>
+</nav>
+{% endblock %}
+
