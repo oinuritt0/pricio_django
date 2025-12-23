@@ -13,18 +13,48 @@ def home(request):
 
 def store_products(request, store_id):
     """Products list for a specific store."""
+    from .models import Product
+    from .search import smart_search
+    
     if store_id not in settings.STORES:
         return render(request, '404.html', status=404)
     
-    # TODO: Get products from database
-    products = []
-    categories = []
+    search_query = request.GET.get('search', '').strip()
+    category = request.GET.get('category', '')
+    page = int(request.GET.get('page', 1))
+    per_page = 50
+    
+    # Get categories
+    categories = Product.objects.filter(store_id=store_id).values_list(
+        'category_name', flat=True
+    ).distinct().order_by('category_name')
+    categories = [c for c in categories if c]
+    
+    # Search or list products
+    if search_query:
+        search_results = smart_search(store_id, search_query, category)
+        products = [p for p, score in search_results]
+        total = len(products)
+    else:
+        queryset = Product.objects.filter(store_id=store_id)
+        if category:
+            queryset = queryset.filter(category_name=category)
+        queryset = queryset.order_by('name')
+        total = queryset.count()
+        products = queryset[(page-1)*per_page : page*per_page]
+    
+    total_pages = (total + per_page - 1) // per_page
     
     context = {
         'store_id': store_id,
         'store': settings.STORES[store_id],
         'products': products,
         'categories': categories,
+        'search_query': search_query,
+        'current_category': category,
+        'page': page,
+        'total_pages': total_pages,
+        'total': total,
         'active_store': store_id,
     }
     return render(request, 'products/store.html', context)
