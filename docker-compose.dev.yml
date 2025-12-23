@@ -1,0 +1,37 @@
+# Docker Compose for Development
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Django Web Application (development mode)
+  web:
+    build: .
+    container_name: pricio_dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/__pycache__
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Telegram Bot (development)
+  telegram_bot:
+    build: .
+    container_name: pricio_bot_dev
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    depends_on:
+      - web
+    command: python manage.py telegram_bot
+

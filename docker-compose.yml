@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: pricio_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pricio
+      POSTGRES_USER: pricio_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pricio_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pricio_user -d pricio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application
+  web:
+    build: .
+    container_name: pricio_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=postgres://pricio_user:${DB_PASSWORD:-pricio_secure_password}@db:5432/pricio
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./db.sqlite3:/app/db.sqlite3
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn --bind 0.0.0.0:8000 --workers 2 pricio.wsgi:application"
+
+  # Telegram Bot Service
+  telegram_bot:
+    build: .
+    container_name: pricio_telegram_bot
+    restart: unless-stopped
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=postgres://pricio_user:${DB_PASSWORD:-pricio_secure_password}@db:5432/pricio
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3
+    depends_on:
+      - db
+      - web
+    command: python manage.py telegram_bot
+
+  # Notification Service (checks price changes)
+  notification_service:
+    build: .
+    container_name: pricio_notifications
+    restart: unless-stopped
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=postgres://pricio_user:${DB_PASSWORD:-pricio_secure_password}@db:5432/pricio
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3
+    depends_on:
+      - db
+      - telegram_bot
+    command: python manage.py notify_price_drops --daemon --interval 3600
+
+  # Nginx Reverse Proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: pricio_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      - web
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
