@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Избранное{% endblock %}
+
+{% block content %}
+<div class="favorites-container">
+    <h1 class="page-title">❤️ Избранное</h1>
+    
+    {% if favorites %}
+    <div class="products-grid">
+        {% for fav in favorites %}
+        <a href="{% url 'products:product' fav.product.store.store_id fav.product.product_id %}" class="product-card">
+            <div class="product-name">{{ fav.product.name }}</div>
+            <div class="product-price">{{ fav.product.current_price }} ₽</div>
+            <div class="product-store">{{ fav.product.store.name }}</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">❤️</div>
+        <h2>Избранное пусто</h2>
+        <p>Добавляйте товары в избранное, чтобы следить за ними</p>
+        <a href="{% url 'products:home' %}" class="btn btn-primary">Перейти к товарам</a>
+    </div>
+    {% endif %}
+    
+    {% if alerts %}
+    <h2 class="section-title mt-4">🔔 Отслеживаемые товары</h2>
+    <div class="products-grid">
+        {% for alert in alerts %}
+        <a href="{% url 'products:product' alert.product.store.store_id alert.product.product_id %}" class="product-card">
+            <div class="product-name">{{ alert.product.name }}</div>
+            <div class="product-price">{{ alert.product.current_price }} ₽</div>
+            {% if alert.target_price %}
+            <div class="alert-target">Цель: {{ alert.target_price }} ₽</div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.favorites-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-title {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    margin-bottom: 1.5rem;
+}
+
+.product-store {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.alert-target {
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin-top: 0.25rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--background);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}
+

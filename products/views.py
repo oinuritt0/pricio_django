@@ -50,10 +50,14 @@ def product_detail(request, store_id, product_id):
 @login_required
 def favorites(request):
     """User's favorites and price alerts."""
-    # TODO: Get user's favorites
+    from .models import Favorite, PriceAlert
+    
+    user_favorites = Favorite.objects.filter(user=request.user).select_related('product', 'product__store')
+    user_alerts = PriceAlert.objects.filter(user=request.user, is_active=True).select_related('product', 'product__store')
+    
     return render(request, 'products/favorites.html', {
-        'favorites': [],
-        'alerts': [],
+        'favorites': user_favorites,
+        'alerts': user_alerts,
     })
 
 
