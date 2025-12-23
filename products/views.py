@@ -67,8 +67,9 @@ def store_products(request, store_id):
 
 
 def product_detail(request, store_id, product_id):
-    """Product detail page with price history."""
+    """Product detail page with price history and similar products."""
     from .models import Product, PriceHistory, Favorite, PriceAlert
+    from .search import get_similar_products_v2, get_cross_store_comparison, calculate_price_per_unit
     import json
     
     if store_id not in settings.STORES:
@@ -83,11 +84,34 @@ def product_detail(request, store_id, product_id):
         for h in reversed(list(price_history))
     ])
     
-    # Similar products (same category)
-    similar_products = Product.objects.filter(
+    # Current price as float
+    current_price = float(product.current_price) if product.current_price else 0
+    
+    # Similar products in the same store (with advanced scoring)
+    similar_products = get_similar_products_v2(
         store_id=store_id,
-        category_name=product.category_name
-    ).exclude(product_id=product_id)[:5]
+        product_name=product.name,
+        product_id=product_id,
+        current_price=current_price,
+        category=product.category_name,
+        limit=6
+    )
+    
+    # Cross-store comparison (find similar products in another store)
+    cross_store_products = get_cross_store_comparison(
+        product_name=product.name,
+        product_id=product_id,
+        source_store=store_id,
+        current_price=current_price,
+        limit=5
+    )
+    
+    # Get target store info for cross-store comparison
+    target_store_id = 'magnit' if store_id == '5ka' else '5ka'
+    target_store = settings.STORES.get(target_store_id)
+    
+    # Calculate price per unit for current product
+    price_per_unit = calculate_price_per_unit(product)
     
     # Check user favorites/alerts
     is_favorite = False
@@ -103,6 +127,10 @@ def product_detail(request, store_id, product_id):
         'price_history': price_history,
         'price_history_json': price_history_json,
         'similar_products': similar_products,
+        'cross_store_products': cross_store_products,
+        'target_store': target_store,
+        'target_store_id': target_store_id,
+        'price_per_unit': price_per_unit,
         'is_favorite': is_favorite,
         'has_alert': has_alert,
         'active_store': store_id,
