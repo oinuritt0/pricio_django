@@ -131,18 +131,58 @@ def search(request):
 @login_required
 def toggle_favorite(request, store_id, product_id):
     """Toggle product in favorites (AJAX)."""
+    from .models import Product, Favorite
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    # TODO: Implement toggle favorite
-    return JsonResponse({'success': True, 'is_favorite': True})
+    try:
+        product = Product.objects.get(store_id=store_id, product_id=product_id)
+        favorite, created = Favorite.objects.get_or_create(
+            user=request.user,
+            product=product
+        )
+        
+        if not created:
+            favorite.delete()
+            return JsonResponse({'success': True, 'is_favorite': False, 'message': 'Removed from favorites'})
+        
+        return JsonResponse({'success': True, 'is_favorite': True, 'message': 'Added to favorites'})
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
 
 
 @login_required
 def toggle_alert(request, store_id, product_id):
     """Toggle price alert for product (AJAX)."""
+    from .models import Product, PriceAlert
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    # TODO: Implement toggle alert
-    return JsonResponse({'success': True, 'has_alert': True})
+    try:
+        product = Product.objects.get(store_id=store_id, product_id=product_id)
+        alert, created = PriceAlert.objects.get_or_create(
+            user=request.user,
+            product=product,
+            defaults={
+                'notify_any_decrease': True,
+                'last_price': product.current_price,
+                'is_active': True
+            }
+        )
+        
+        if not created:
+            if alert.is_active:
+                alert.is_active = False
+                alert.save()
+                return JsonResponse({'success': True, 'has_alert': False, 'message': 'Alert disabled'})
+            else:
+                alert.is_active = True
+                alert.last_price = product.current_price
+                alert.save()
+                return JsonResponse({'success': True, 'has_alert': True, 'message': 'Alert enabled'})
+        
+        return JsonResponse({'success': True, 'has_alert': True, 'message': 'Alert created'})
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
