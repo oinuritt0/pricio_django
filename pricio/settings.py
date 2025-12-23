@@ -154,7 +154,7 @@ STORES = {
 }
 
 # Telegram Bot settings
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '7951704334:AAEW3nnyFyHsUWZCY0zoMouH_UsY35zFAXI')
 TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', 'PricioNotify_Bot')
 
 # Notification settings

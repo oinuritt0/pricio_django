@@ -31,14 +31,12 @@ def profile(request):
 
 @login_required
 def link_telegram(request):
-    """Link Telegram account - generate code or unlink."""
-    from .models import TelegramLinkCode
+    """Link Telegram account using code from bot."""
+    from .models import TelegramLinkCode, UserProfile
     from django.utils import timezone
-    from datetime import timedelta
-    import secrets
     
     if request.method == 'POST':
-        action = request.POST.get('action', 'generate')
+        action = request.POST.get('action', 'link')
         
         if action == 'unlink':
             # Unlink Telegram
@@ -51,15 +49,47 @@ def link_telegram(request):
             else:
                 messages.warning(request, 'Telegram не был привязан.')
         else:
-            # Generate new link code
-            TelegramLinkCode.objects.filter(user=request.user, is_used=False).delete()
+            # Link using code from Telegram bot
+            code = request.POST.get('code', '').strip().upper()
             
-            code = secrets.token_hex(4).upper()
-            TelegramLinkCode.objects.create(
-                user=request.user,
-                code=code,
-                expires_at=timezone.now() + timedelta(minutes=10)
-            )
-            messages.success(request, f'Код привязки: {code} (действует 10 минут)')
+            if not code:
+                messages.error(request, 'Введите код привязки.')
+                return redirect('accounts:profile')
+            
+            # Clean up expired codes
+            TelegramLinkCode.objects.filter(expires_at__lt=timezone.now()).delete()
+            
+            # Find valid code
+            try:
+                link_code = TelegramLinkCode.objects.get(
+                    code=code,
+                    is_used=False,
+                    expires_at__gt=timezone.now(),
+                    telegram_chat_id__isnull=False
+                )
+            except TelegramLinkCode.DoesNotExist:
+                messages.error(request, 'Неверный или истёкший код привязки.')
+                return redirect('accounts:profile')
+            
+            # Check if this Telegram is already linked to another account
+            existing = UserProfile.objects.filter(
+                telegram_chat_id=link_code.telegram_chat_id
+            ).exclude(user=request.user).first()
+            
+            if existing:
+                messages.error(request, f'Этот Telegram уже привязан к аккаунту {existing.user.username}.')
+                return redirect('accounts:profile')
+            
+            # Link Telegram to user
+            profile = request.user.profile
+            profile.telegram_chat_id = link_code.telegram_chat_id
+            profile.save()
+            
+            # Mark code as used
+            link_code.is_used = True
+            link_code.user = request.user
+            link_code.save()
+            
+            messages.success(request, 'Telegram успешно привязан! Теперь вы будете получать уведомления.')
     
     return redirect('accounts:profile')

@@ -38,24 +38,32 @@
             <div class="card-body">
                 {% if user.profile.telegram_chat_id %}
                 <div class="telegram-connected">
-                    <span class="telegram-status connected">✅ Подключен</span>
-                    <p>@{{ user.profile.telegram_username|default:"Telegram" }}</p>
+                    <span class="telegram-status connected">✅ Telegram привязан</span>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem;">
+                        Вы будете получать уведомления о снижении цен на отслеживаемые товары.
+                    </p>
                     <form method="POST" action="{% url 'accounts:link_telegram' %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-secondary">Отключить</button>
+                        <input type="hidden" name="action" value="unlink">
+                        <button type="submit" class="btn btn-secondary">Отвязать Telegram</button>
                     </form>
                 </div>
                 {% else %}
                 <div class="telegram-disconnected">
-                    <p>Подключите Telegram, чтобы получать уведомления о снижении цен.</p>
+                    <span class="telegram-status not-linked">⚠️ Telegram не привязан</span>
+                    <p style="margin: 0.5rem 0;">Привяжите Telegram для уведомлений:</p>
+                    
                     <ol class="telegram-steps">
-                        <li>Найдите бота <strong>@PricioNotify_Bot</strong></li>
+                        <li>Откройте бота <a href="https://t.me/PricioNotify_Bot" target="_blank" style="color: var(--primary);">@PricioNotify_Bot</a></li>
                         <li>Отправьте команду <code>/start</code></li>
-                        <li>Введите полученный код ниже</li>
+                        <li>Скопируйте полученный код</li>
+                        <li>Введите код ниже:</li>
                     </ol>
+                    
                     <form method="POST" action="{% url 'accounts:link_telegram' %}" class="telegram-form">
                         {% csrf_token %}
-                        <input type="text" name="code" class="form-input" placeholder="Код привязки">
+                        <input type="text" name="code" class="form-input" placeholder="XXXXXXXX" 
+                               maxlength="8" style="text-transform: uppercase; font-family: monospace;">
                         <button type="submit" class="btn btn-primary">Привязать</button>
                     </form>
                 </div>
@@ -149,6 +157,11 @@
 .telegram-status.connected {
     background: #dcfce7;
     color: #166534;
+}
+
+.telegram-status.not-linked {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .telegram-steps {

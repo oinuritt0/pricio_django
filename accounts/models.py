@@ -22,8 +22,14 @@ class UserProfile(models.Model):
 
 
 class TelegramLinkCode(models.Model):
-    """Temporary codes for linking Telegram accounts."""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    """Temporary codes for linking Telegram accounts.
+    
+    Codes can be generated:
+    1. By the Telegram bot (/start, /link) - stores telegram_chat_id
+    2. By the website (profile page) - stores user
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    telegram_chat_id = models.CharField(max_length=100, null=True, blank=True)
     code = models.CharField(max_length=20, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
@@ -34,7 +40,14 @@ class TelegramLinkCode(models.Model):
         verbose_name_plural = 'Telegram Link Codes'
     
     def __str__(self):
-        return f"Code for {self.user.username}: {self.code}"
+        if self.user:
+            return f"Code for {self.user.username}: {self.code}"
+        return f"Code for chat {self.telegram_chat_id}: {self.code}"
+    
+    def is_valid(self):
+        """Check if code is still valid."""
+        from django.utils import timezone
+        return not self.is_used and self.expires_at > timezone.now()
 
 
 @receiver(post_save, sender=User)
