@@ -12,7 +12,7 @@ def home(request):
 
 
 def store_products(request, store_id):
-    """Products list for a specific store."""
+    """Products list for a specific store with smart search."""
     from .models import Product
     from .search import smart_search
     
@@ -32,9 +32,14 @@ def store_products(request, store_id):
     
     # Search or list products
     if search_query:
-        search_results = smart_search(store_id, search_query, category)
-        products = [p for p, score in search_results]
-        total = len(products)
+        # Smart search with Cyrillic support and relevance scoring
+        search_results = smart_search(store_id, search_query, category if category else None, limit=1000)
+        all_products = [p for p, score in search_results]
+        total = len(all_products)
+        # Apply pagination to search results
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        products = all_products[start_idx:end_idx]
     else:
         queryset = Product.objects.filter(store_id=store_id)
         if category:
@@ -43,9 +48,9 @@ def store_products(request, store_id):
         total = queryset.count()
         products = queryset[(page-1)*per_page : page*per_page]
     
-    total_pages = (total + per_page - 1) // per_page
+    total_pages = max(1, (total + per_page - 1) // per_page)
     
-    # Calculate page range for pagination
+    # Calculate page range for pagination (show 5 pages around current)
     start_page = max(1, page - 2)
     end_page = min(total_pages, page + 2)
     page_range = range(start_page, end_page + 1)
