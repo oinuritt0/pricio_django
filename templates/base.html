@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pricio{% endblock %} - Сравнение цен</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="{% url 'products:home' %}" class="logo">
+                <span class="logo-icon">💰</span>
+                <span class="logo-text">Pricio</span>
+            </a>
+            
+            <nav class="nav-stores">
+                {% for store_id, store in stores.items %}
+                <a href="{% url 'products:store' store_id %}" 
+                   class="nav-store {% if active_store == store_id %}active{% endif %}"
+                   style="--store-color: {{ store.color }}">
+                    <span class="store-icon">{{ store.icon }}</span>
+                    <span class="store-name">{{ store.name }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+            
+            <nav class="nav-user">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'products:favorites' %}" class="nav-link">
+                        <span>❤️</span> Избранное
+                    </a>
+                    <a href="{% url 'accounts:profile' %}" class="nav-link user-link">
+                        <span class="user-avatar">{{ user.username|slice:":1"|upper }}</span>
+                        <span>{{ user.username }}</span>
+                    </a>
+                    <a href="{% url 'accounts:logout' %}" class="nav-link">Выйти</a>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="nav-link">Войти</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary">Регистрация</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2024 Pricio. Сравнение цен в магазинах Пятёрочка и Магнит.</p>
+        </div>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

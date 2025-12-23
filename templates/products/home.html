@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="home-hero">
+    <h1 class="home-title">Сравнивайте цены.<br>Экономьте деньги.</h1>
+    <p class="home-subtitle">Отслеживайте цены на продукты в Пятёрочке и Магните.<br>Получайте уведомления о скидках.</p>
+</div>
+
+<div class="store-cards">
+    {% for store_id, store in stores.items %}
+    <a href="{% url 'products:store' store_id %}" class="store-card" style="--store-color: {{ store.color }}">
+        <div class="store-card-icon">{{ store.icon }}</div>
+        <h2 class="store-card-name">{{ store.name }}</h2>
+        <p class="store-card-desc">Смотреть товары →</p>
+    </a>
+    {% endfor %}
+</div>
+
+<div class="features">
+    <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>Умный поиск</h3>
+        <p>Находите товары по названию, бренду или категории</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>История цен</h3>
+        <p>Смотрите как менялась цена на товар</p>
+    </div>
+    <div class="feature">
+        <div class="feature-icon">🔔</div>
+        <h3>Уведомления</h3>
+        <p>Получайте оповещения о снижении цен</p>
+    </div>
+</div>
+
+<style>
+.home-hero {
+    text-align: center;
+    padding: 3rem 0;
+}
+
+.home-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.home-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.store-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+}
+
+.store-card {
+    background: var(--background);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.store-card:hover {
+    border-color: var(--store-color, var(--primary));
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
+.store-card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--store-color, var(--primary));
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.store-card-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.store-card-desc {
+    color: var(--text-secondary);
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin: 4rem 0;
+}
+
+.feature {
+    text-align: center;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.feature h3 {
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+}
+
+.feature p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+

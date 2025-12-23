@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="store-header">
+    <div class="store-info">
+        <div class="store-icon-large" style="background: {{ store.color }}">{{ store.icon }}</div>
+        <div>
+            <h1>{{ store.name }}</h1>
+            <p class="text-secondary">{{ products|length }} товаров</p>
+        </div>
+    </div>
+    
+    <form class="search-form" action="{% url 'products:store' store_id %}" method="GET">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="search" class="search-input" 
+               placeholder="Поиск: молоко, сыр..." 
+               value="{{ request.GET.search }}">
+    </form>
+</div>
+
+{% if categories %}
+<div class="categories-filter">
+    <a href="{% url 'products:store' store_id %}" 
+       class="category-tag {% if not request.GET.category %}active{% endif %}">
+        Все
+    </a>
+    {% for category in categories %}
+    <a href="?category={{ category }}" 
+       class="category-tag {% if request.GET.category == category %}active{% endif %}">
+        {{ category }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if products %}
+<div class="products-grid">
+    {% for product in products %}
+    <a href="{% url 'products:product' store_id product.product_id %}" class="product-card">
+        <div class="product-name">{{ product.name }}</div>
+        <div class="product-price">{{ product.current_price }} ₽</div>
+        {% if product.category %}
+        <div class="product-category">{{ product.category }}</div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📦</div>
+    <h2>Товары не найдены</h2>
+    <p>Попробуйте изменить параметры поиска или категорию</p>
+</div>
+{% endif %}
+
+<style>
+.store-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.store-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.store-icon-large {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.store-info h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.categories-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.category-tag {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.category-tag:hover {
+    background: var(--secondary);
+}
+
+.category-tag.active {
+    background: var(--primary);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+}
+</style>
+{% endblock %}
+
