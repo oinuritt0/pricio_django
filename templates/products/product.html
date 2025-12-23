@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="product-detail">
+    <nav class="breadcrumb">
+        <a href="{% url 'products:home' %}">Главная</a> /
+        <a href="{% url 'products:store' store_id %}">{{ store.name }}</a> /
+        <span>{{ product.name|truncatechars:40 }}</span>
+    </nav>
+    
+    <div class="product-header">
+        <div class="product-info">
+            <h1>{{ product.name }}</h1>
+            <p class="product-category">{{ product.category_name }}</p>
+        </div>
+        
+        <div class="product-price-card">
+            <div class="price-current">{{ product.current_price }} ₽</div>
+            <div class="price-range">
+                <span class="price-min">↓ {{ product.min_price }} ₽</span>
+                <span class="price-max">↑ {{ product.max_price }} ₽</span>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <div class="product-actions">
+                <button class="btn {% if is_favorite %}btn-primary{% else %}btn-secondary{% endif %}" 
+                        onclick="toggleFavorite('{{ store_id }}', '{{ product.product_id }}')">
+                    {{ is_favorite|yesno:"❤️ В избранном,🤍 В избранное" }}
+                </button>
+                <button class="btn {% if has_alert %}btn-primary{% else %}btn-secondary{% endif %}"
+                        onclick="toggleAlert('{{ store_id }}', '{{ product.product_id }}')">
+                    {{ has_alert|yesno:"🔔 Отслеживается,🔕 Следить" }}
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="product-grid">
+        <div class="card">
+            <div class="card-header">
+                <h2>📈 История цен</h2>
+            </div>
+            <div class="card-body">
+                <canvas id="priceChart" height="200"></canvas>
+            </div>
+        </div>
+        
+        {% if similar_products %}
+        <div class="card">
+            <div class="card-header">
+                <h2>🔄 Похожие товары</h2>
+            </div>
+            <div class="card-body">
+                <div class="similar-products">
+                    {% for similar in similar_products %}
+                    <a href="{% url 'products:product' store_id similar.product_id %}" class="similar-item">
+                        <span class="similar-name">{{ similar.name|truncatechars:50 }}</span>
+                        <span class="similar-price">{{ similar.current_price }} ₽</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 История изменений</h2>
+            </div>
+            <div class="card-body">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Цена</th>
+                            <th>Изменение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in price_history %}
+                        <tr>
+                            <td>{{ record.recorded_at|date:"d.m.Y H:i" }}</td>
+                            <td><strong>{{ record.price }} ₽</strong></td>
+                            <td>
+                                {% if record.previous_price %}
+                                    {% with diff=record.price|add:"-"|add:record.previous_price %}
+                                    <span class="price-diff {% if diff < 0 %}cheaper{% else %}expensive{% endif %}">
+                                        {% if diff > 0 %}+{% endif %}{{ diff }} ₽
+                                    </span>
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="text-secondary">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-secondary">Нет данных об изменениях</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-detail {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.breadcrumb {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.breadcrumb a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    color: var(--primary);
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.product-info h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.product-category {
+    color: var(--text-secondary);
+}
+
+.product-price-card {
+    background: var(--secondary);
+    border: 2px solid var(--primary-light);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+    min-width: 200px;
+}
+
+.price-current {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.price-range {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 0.5rem 0 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.product-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.similar-products {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.similar-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.2s;
+}
+
+.similar-item:hover {
+    background: var(--secondary);
+}
+
+.similar-price {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.price-table th,
+.price-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.price-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Price chart
+const ctx = document.getElementById('priceChart');
+if (ctx) {
+    const priceData = {{ price_history_json|safe }};
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: priceData.map(p => p.date),
+            datasets: [{
+                label: 'Цена',
+                data: priceData.map(p => p.price),
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+// Toggle functions
+async function toggleFavorite(storeId, productId) {
+    const response = await fetch(`/api/favorite/${storeId}/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+    if (response.ok) location.reload();
+}
+
+async function toggleAlert(storeId, productId) {
+    const response = await fetch(`/api/alert/${storeId}/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+    if (response.ok) location.reload();
+}
+</script>
+{% endblock %}
+
