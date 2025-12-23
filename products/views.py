@@ -45,6 +45,11 @@ def store_products(request, store_id):
     
     total_pages = (total + per_page - 1) // per_page
     
+    # Calculate page range for pagination
+    start_page = max(1, page - 2)
+    end_page = min(total_pages, page + 2)
+    page_range = range(start_page, end_page + 1)
+    
     context = {
         'store_id': store_id,
         'store': settings.STORES[store_id],
@@ -55,6 +60,7 @@ def store_products(request, store_id):
         'page': page,
         'total_pages': total_pages,
         'total': total,
+        'page_range': page_range,
         'active_store': store_id,
     }
     return render(request, 'products/store.html', context)

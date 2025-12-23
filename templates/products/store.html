@@ -8,7 +8,7 @@
         <div class="store-icon-large" style="background: {{ store.color }}">{{ store.icon }}</div>
         <div>
             <h1>{{ store.name }}</h1>
-            <p class="text-secondary">{{ products|length }} товаров</p>
+            <p class="text-secondary">{{ total }} товаров{% if current_category %} в категории "{{ current_category }}"{% endif %}</p>
         </div>
     </div>
     
@@ -41,12 +41,49 @@
     <a href="{% url 'products:product' store_id product.product_id %}" class="product-card">
         <div class="product-name">{{ product.name }}</div>
         <div class="product-price">{{ product.current_price }} ₽</div>
-        {% if product.category %}
-        <div class="product-category">{{ product.category }}</div>
+        {% if product.category_name %}
+        <div class="product-category">{{ store.name }} - {{ product.category_name }}</div>
         {% endif %}
     </a>
     {% endfor %}
 </div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+    <div class="pagination-info">
+        Страница {{ page }} из {{ total_pages }} ({{ total }} товаров)
+    </div>
+    <div class="pagination-nav">
+        {% if page > 1 %}
+        <a href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page|add:'-1' }}" class="btn btn-secondary">
+            ← Назад
+        </a>
+        {% endif %}
+        
+        {% if page > 3 %}
+        <a href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page=1" class="page-num">1</a>
+        {% if page > 4 %}<span class="page-dots">...</span>{% endif %}
+        {% endif %}
+        
+        {% for p in page_range %}
+        <a href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ p }}" 
+           class="page-num {% if p == page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        
+        {% if page < total_pages|add:'-2' %}
+        {% if page < total_pages|add:'-3' %}<span class="page-dots">...</span>{% endif %}
+        <a href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ total_pages }}" class="page-num">{{ total_pages }}</a>
+        {% endif %}
+        
+        {% if page < total_pages %}
+        <a href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page|add:'1' }}" class="btn btn-secondary">
+            Вперёд →
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 {% else %}
 <div class="empty-state">
     <div class="empty-icon">📦</div>
@@ -134,6 +171,54 @@
 
 .empty-state p {
     color: var(--text-secondary);
+}
+
+.pagination {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.pagination-info {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.pagination-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.page-num {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.page-num:hover {
+    background: var(--secondary);
+}
+
+.page-num.active {
+    background: var(--primary);
+    color: white;
+}
+
+.page-dots {
+    color: var(--text-secondary);
+    padding: 0 0.5rem;
 }
 </style>
 {% endblock %}
