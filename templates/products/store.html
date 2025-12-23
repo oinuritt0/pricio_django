@@ -2,33 +2,290 @@
 
 {% block title %}{{ store.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .store-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .store-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .store-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .store-logo.pyaterochka { background: #e30613; }
+    .store-logo.magnit { background: #e31e24; }
+    
+    .search-form {
+        position: relative;
+        max-width: 400px;
+        flex: 1;
+    }
+    
+    .search-form input {
+        width: 100%;
+        padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+        border: 2px solid var(--border);
+        border-radius: 25px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.2s;
+    }
+    
+    .search-form input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+    
+    .search-form .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    
+    .search-form .clear-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--border);
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: var(--text-light);
+        transition: all 0.2s;
+    }
+    
+    .search-form .clear-btn:hover {
+        background: var(--text-light);
+        color: white;
+    }
+    
+    .search-results-banner {
+        background: var(--bg-secondary);
+        border: 1px solid var(--primary-light);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .search-results-banner .query {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    
+    .search-results-banner .clear-search {
+        color: var(--text-light);
+        text-decoration: none;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .search-results-banner .clear-search:hover {
+        color: var(--primary);
+    }
+    
+    .categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .category-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+    }
+    
+    .category-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    
+    .category-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .results-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-light);
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .search-tips {
+        margin-top: 1rem;
+        text-align: left;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .search-tips h4 {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+    
+    .search-tips ul {
+        font-size: 0.8rem;
+        padding-left: 1.25rem;
+    }
+    
+    .search-tips li {
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Pagination */
+    .pagination {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .pagination-info {
+        text-align: center;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+    }
+    
+    .pagination-nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .page-num {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .page-num:hover {
+        background: var(--secondary);
+    }
+    
+    .page-num.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .page-dots {
+        color: var(--text-light);
+        padding: 0 0.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="store-header">
     <div class="store-info">
-        <div class="store-icon-large" style="background: {{ store.color }}">{{ store.icon }}</div>
+        <div class="store-logo {% if store_id == '5ka' %}pyaterochka{% else %}magnit{% endif %}">
+            {% if store_id == '5ka' %}5{% else %}М{% endif %}
+        </div>
         <div>
-            <h1>{{ store.name }}</h1>
-            <p class="text-secondary">{{ total }} товаров{% if current_category %} в категории "{{ current_category }}"{% endif %}</p>
+            <h1 class="page-title">{{ store.name }}</h1>
+            <p class="page-subtitle">{{ total }} товаров{% if current_category %} в категории «{{ current_category }}»{% endif %}</p>
         </div>
     </div>
     
-    <form class="search-form" action="{% url 'products:store' store_id %}" method="GET">
+    <form action="{% url 'products:store' store_id %}" method="get" class="search-form">
+        {% if current_category %}
+        <input type="hidden" name="category" value="{{ current_category }}">
+        {% endif %}
         <span class="search-icon">🔍</span>
-        <input type="text" name="search" class="search-input" 
-               placeholder="Поиск: молоко, сыр..." 
-               value="{{ request.GET.search }}">
+        <input type="text" name="search" placeholder="Поиск: молоко, сыр, Простоквашино..." value="{{ search_query|default:'' }}" autocomplete="off">
+        {% if search_query %}
+        <button type="button" class="clear-btn" onclick="clearSearch()">✕</button>
+        {% endif %}
     </form>
 </div>
 
-{% if categories %}
-<div class="categories-filter">
-    <a href="{% url 'products:store' store_id %}" 
-       class="category-tag {% if not request.GET.category %}active{% endif %}">
-        Все
+{% if search_query %}
+<div class="search-results-banner">
+    <span>Результаты поиска: <span class="query">«{{ search_query }}»</span> — найдено {{ total }} товаров</span>
+    <a href="{% url 'products:store' store_id %}{% if current_category %}?category={{ current_category }}{% endif %}" class="clear-search">
+        ✕ Сбросить поиск
+    </a>
+</div>
+{% endif %}
+
+{% if categories and not search_query %}
+<div class="categories">
+    <a href="{% url 'products:store' store_id %}" class="category-btn {% if not current_category %}active{% endif %}">
+        Все товары
     </a>
     {% for category in categories %}
-    <a href="?category={{ category }}" 
-       class="category-tag {% if request.GET.category == category %}active{% endif %}">
+    <a href="{% url 'products:store' store_id %}?category={{ category }}" 
+       class="category-btn {% if current_category == category %}active{% endif %}">
         {{ category }}
     </a>
     {% endfor %}
@@ -36,14 +293,23 @@
 {% endif %}
 
 {% if products %}
-<div class="products-grid">
+<div class="results-info">
+    <span>Показано {{ products|length }} из {{ total }} товаров</span>
+</div>
+
+<div class="product-grid">
     {% for product in products %}
     <a href="{% url 'products:product' store_id product.product_id %}" class="product-card">
         <div class="product-name">{{ product.name }}</div>
         <div class="product-price">{{ product.current_price }} ₽</div>
-        {% if product.category_name %}
-        <div class="product-category">{{ store.name }} - {{ product.category_name }}</div>
+        {% if product.min_price and product.min_price < product.current_price %}
+        <div class="price-change price-down">
+            Мин. цена: {{ product.min_price }} ₽
+        </div>
         {% endif %}
+        <div class="product-meta">
+            {% if product.category_name %}{{ product.category_name }}{% endif %}
+        </div>
     </a>
     {% endfor %}
 </div>
@@ -86,140 +352,42 @@
 
 {% else %}
 <div class="empty-state">
-    <div class="empty-icon">📦</div>
-    <h2>Товары не найдены</h2>
-    <p>Попробуйте изменить параметры поиска или категорию</p>
+    <div class="empty-state-icon">🔍</div>
+    {% if search_query %}
+    <h3>По запросу «{{ search_query }}» ничего не найдено</h3>
+    <p>Попробуйте изменить запрос</p>
+    <div class="search-tips">
+        <h4>Советы по поиску:</h4>
+        <ul>
+            <li>Проверьте правильность написания</li>
+            <li>Используйте более общие слова</li>
+            <li>Попробуйте поискать по бренду или категории</li>
+        </ul>
+    </div>
+    <a href="{% url 'products:store' store_id %}" class="btn btn-primary" style="margin-top: 1rem;">Показать все товары</a>
+    {% else %}
+    <h3>Товары не найдены</h3>
+    <p>В этой категории пока нет товаров</p>
+    {% endif %}
 </div>
 {% endif %}
-
-<style>
-.store-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.store-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.store-icon-large {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    color: white;
-    font-size: 1.75rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.store-info h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.25rem;
-}
-
-.text-secondary {
-    color: var(--text-secondary);
-}
-
-.categories-filter {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-}
-
-.category-tag {
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-}
-
-.category-tag:hover {
-    background: var(--secondary);
-}
-
-.category-tag.active {
-    background: var(--primary);
-    color: white;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-}
-
-.empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-}
-
-.empty-state h2 {
-    margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-    color: var(--text-secondary);
-}
-
-.pagination {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border);
-}
-
-.pagination-info {
-    text-align: center;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-}
-
-.pagination-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.page-num {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.page-num:hover {
-    background: var(--secondary);
-}
-
-.page-num.active {
-    background: var(--primary);
-    color: white;
-}
-
-.page-dots {
-    color: var(--text-secondary);
-    padding: 0 0.5rem;
-}
-</style>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+function clearSearch() {
+    const form = document.querySelector('.search-form');
+    const input = form.querySelector('input[name="search"]');
+    input.value = '';
+    form.submit();
+}
+
+// Автофокус на поле поиска при нажатии /
+document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.querySelector('.search-form input[name="search"]').focus();
+    }
+});
+</script>
+{% endblock %}
